@@ -33,7 +33,6 @@ public class ImageSender {
             writeInt(bytes.length);
             stream.write(bytes);
         } catch (IOException e) {
-            e.printStackTrace();
         }
     }
 
@@ -45,10 +44,9 @@ public class ImageSender {
 
     public void close() {
         try {
-            stream.close();
-            socket.close();
+            if (stream != null) stream.close();
+            if (socket != null) socket.close();
         } catch (IOException e) {
-            e.printStackTrace();
         }
     }
 }

@@ -9,10 +9,14 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.KeyEvent;
 import android.view.Surface;
 import android.view.TextureView;
 import android.view.TextureView.SurfaceTextureListener;
+import android.view.View;
 import android.view.WindowManager;
+import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -27,6 +31,7 @@ public class MainActivity extends AppCompatActivity implements Camera.PreviewCal
     private Handler handler;
     private AtomicBoolean isProcessingFrame;
     private ImageSender imageSender;
+    private EditText addressEditor;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,6 +39,17 @@ public class MainActivity extends AppCompatActivity implements Camera.PreviewCal
         setContentView(R.layout.activity_main);
         isProcessingFrame = new AtomicBoolean(false);
         textureView = findViewById(R.id.textureView);
+        addressEditor = findViewById(R.id.addressEditor);
+        addressEditor.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+            @Override
+            public boolean onEditorAction(TextView textView, int i, KeyEvent keyEvent) {
+                if (imageSender != null) {
+                    imageSender.close();
+                    imageSender = null;
+                }
+                return false;
+            }
+        });
         surfaceTextureListener = new SurfaceTextureListener() {
             @Override
             public void onSurfaceTextureAvailable(SurfaceTexture texture, int width, int height) {
@@ -108,7 +124,7 @@ public class MainActivity extends AppCompatActivity implements Camera.PreviewCal
             public void run() {
                 if (imageSender == null)
                     imageSender = new ImageSender(
-                            "192.168.0.106", 6666,
+                            addressEditor.getText().toString(),6666,
                             imageSize.width, imageSize.height
                     );
                 else imageSender.send(bytes);
