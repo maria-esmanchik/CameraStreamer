@@ -44,8 +44,14 @@ public class MainActivity extends AppCompatActivity implements Camera.PreviewCal
             @Override
             public boolean onEditorAction(TextView textView, int i, KeyEvent keyEvent) {
                 if (imageSender != null) {
-                    imageSender.close();
-                    imageSender = null;
+                    final String host = textView.getText().toString();
+                    runInBackground(new Runnable() {
+                        @Override
+                        public void run() {
+                            imageSender.connect(host, 6666);
+                        }
+                    });
+
                 }
                 return false;
             }
@@ -54,6 +60,7 @@ public class MainActivity extends AppCompatActivity implements Camera.PreviewCal
             @Override
             public void onSurfaceTextureAvailable(SurfaceTexture texture, int width, int height) {
                 startCamera();
+                imageSender = new ImageSender(imageSize.width, imageSize.height);
             }
 
             @Override
@@ -122,12 +129,7 @@ public class MainActivity extends AppCompatActivity implements Camera.PreviewCal
         runInBackground(new Runnable() {
             @Override
             public void run() {
-                if (imageSender == null)
-                    imageSender = new ImageSender(
-                            addressEditor.getText().toString(),6666,
-                            imageSize.width, imageSize.height
-                    );
-                else imageSender.send(bytes);
+                if (imageSender != null) imageSender.send(bytes);
                 camera.addCallbackBuffer(bytes);
                 isProcessingFrame.set(false);
             }
@@ -145,7 +147,7 @@ public class MainActivity extends AppCompatActivity implements Camera.PreviewCal
             camera.setParameters(parameters);
             int orientation = getCameraDisplayOrientation(getCameraInfo());
             camera.setDisplayOrientation(orientation);
-            camera.setPreviewTexture(textureView.getSurfaceTexture());            
+            camera.setPreviewTexture(textureView.getSurfaceTexture());
             camera.setPreviewCallbackWithBuffer(this);
             camera.addCallbackBuffer(new byte[getYUVByteSize(imageSize.height, imageSize.width)]);
             camera.startPreview();

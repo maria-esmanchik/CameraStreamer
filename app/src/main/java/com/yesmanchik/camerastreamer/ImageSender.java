@@ -8,21 +8,18 @@ import java.net.UnknownHostException;
 
 public class ImageSender {
 
+    private String host;
+    private int port;
     private Socket socket;
     private OutputStream stream;
     private int width;
     private int height;
 
-    public ImageSender(String host, int port, int width, int height) {
-        try {
-            this.width = width;
-            this.height = height;
-            InetAddress address = InetAddress.getByName(host);
-            socket = new Socket(address, port);
-            stream = socket.getOutputStream();
-        } catch (Exception e) {
-        }
-
+    public ImageSender(int width, int height) {
+        this.host = "";
+        this.port = 0;
+        this.width = width;
+        this.height = height;
     }
 
     public void send(final byte[] bytes) {
@@ -47,6 +44,20 @@ public class ImageSender {
             if (stream != null) stream.close();
             if (socket != null) socket.close();
         } catch (IOException e) {
+        }
+    }
+
+    public void connect(String host, int port) {
+        if (this.host.equals(host) && this.port == port) return;
+        close();
+        try {
+            InetAddress address = InetAddress.getByName(host);
+            socket = new Socket(address, port);
+            stream = socket.getOutputStream();
+            this.host = host;
+            this.port = port;
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 }
