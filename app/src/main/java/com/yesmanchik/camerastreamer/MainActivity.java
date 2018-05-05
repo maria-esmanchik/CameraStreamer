@@ -2,7 +2,12 @@ package com.yesmanchik.camerastreamer;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.ImageFormat;
+import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
+import android.graphics.YuvImage;
 import android.hardware.Camera;
 import android.os.Build;
 import android.os.Handler;
@@ -19,6 +24,7 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.ByteArrayOutputStream;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class MainActivity extends AppCompatActivity implements Camera.PreviewCallback {
@@ -129,7 +135,13 @@ public class MainActivity extends AppCompatActivity implements Camera.PreviewCal
         runInBackground(new Runnable() {
             @Override
             public void run() {
-                if (imageSender != null) imageSender.send(bytes);
+                int width = imageSize.width;
+                int height = imageSize.height;
+                ByteArrayOutputStream out = new ByteArrayOutputStream();
+                YuvImage yuvImage = new YuvImage(bytes, ImageFormat.NV21, width, height, null);
+                yuvImage.compressToJpeg(new Rect(0, 0, width, height), 90, out);
+                byte[] jpegBytes = out.toByteArray();
+                imageSender.send(jpegBytes);
                 camera.addCallbackBuffer(bytes);
                 isProcessingFrame.set(false);
             }
