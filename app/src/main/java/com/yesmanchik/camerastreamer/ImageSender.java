@@ -30,6 +30,9 @@ public class ImageSender {
             writeInt(bytes.length);
             stream.write(bytes);
         } catch (IOException e) {
+            String h = host;
+            host = "";
+            connect(h, port);
         }
     }
 
