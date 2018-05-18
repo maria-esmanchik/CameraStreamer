@@ -30,6 +30,7 @@ public class ImageSender {
     public void send(final byte[] bytes) {
         if (stream == null) return;
         try {
+            writeInt(0xfedcba98);
             writeInt(width);
             writeInt(height);
             writeInt(bytes.length);
