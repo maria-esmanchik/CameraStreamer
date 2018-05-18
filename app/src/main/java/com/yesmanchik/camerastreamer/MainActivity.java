@@ -67,6 +67,12 @@ public class MainActivity extends AppCompatActivity implements Camera.PreviewCal
             public void onSurfaceTextureAvailable(SurfaceTexture texture, int width, int height) {
                 startCamera();
                 imageSender = new ImageSender(imageSize.width, imageSize.height);
+                runInBackground(new Runnable() {
+                    @Override
+                    public void run() {
+                        imageSender.connect("0.0.0.0", 6666);
+                    }
+                });
             }
 
             @Override

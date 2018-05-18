@@ -3,13 +3,18 @@ package com.yesmanchik.camerastreamer;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetAddress;
+import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.util.logging.Logger;
 
 public class ImageSender {
 
+    private static Logger log = Logger.getLogger(ImageSender.class.getName());
+
     private String host;
     private int port;
+    private ServerSocket server;
     private Socket socket;
     private OutputStream stream;
     private int width;
@@ -30,6 +35,7 @@ public class ImageSender {
             writeInt(bytes.length);
             stream.write(bytes);
         } catch (IOException e) {
+            log.severe(e.getMessage());
             String h = host;
             host = "";
             connect(h, port);
@@ -46,7 +52,9 @@ public class ImageSender {
         try {
             if (stream != null) stream.close();
             if (socket != null) socket.close();
+            if (server != null) server.close();
         } catch (IOException e) {
+            log.severe(e.getMessage());
         }
     }
 
@@ -54,13 +62,18 @@ public class ImageSender {
         if (this.host.equals(host) && this.port == port) return;
         close();
         try {
-            InetAddress address = InetAddress.getByName(host);
-            socket = new Socket(address, port);
+            if (host.equals("0.0.0.0")) {
+                server = new ServerSocket(port);
+                socket = server.accept();
+            } else {
+                InetAddress address = InetAddress.getByName(host);
+                socket = new Socket(address, port);
+            }
             stream = socket.getOutputStream();
             this.host = host;
             this.port = port;
         } catch (Exception e) {
-            e.printStackTrace();
+            log.severe(e.getMessage());
         }
     }
 }
