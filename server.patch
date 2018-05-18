@@ -1,0 +1,96 @@
+diff --git a/app/src/main/java/com/yesmanchik/camerastreamer/ImageSender.java b/app/src/main/java/com/yesmanchik/camerastreamer/ImageSender.java
+index 2dc41c5..4b8e119 100644
+--- a/app/src/main/java/com/yesmanchik/camerastreamer/ImageSender.java
++++ b/app/src/main/java/com/yesmanchik/camerastreamer/ImageSender.java
+@@ -3,13 +3,18 @@ package com.yesmanchik.camerastreamer;
+ import java.io.IOException;
+ import java.io.OutputStream;
+ import java.net.InetAddress;
++import java.net.ServerSocket;
+ import java.net.Socket;
+ import java.net.UnknownHostException;
++import java.util.logging.Logger;
+ 
+ public class ImageSender {
+ 
++    private static Logger log = Logger.getLogger(ImageSender.class.getName());
++
+     private String host;
+     private int port;
++    private ServerSocket server;
+     private Socket socket;
+     private OutputStream stream;
+     private int width;
+@@ -30,6 +35,10 @@ public class ImageSender {
+             writeInt(bytes.length);
+             stream.write(bytes);
+         } catch (IOException e) {
++            log.severe(e.getMessage());
++            String h = host;
++            host = "";
++            connect(h, port);
+         }
+     }
+ 
+@@ -43,7 +52,9 @@ public class ImageSender {
+         try {
+             if (stream != null) stream.close();
+             if (socket != null) socket.close();
++            if (server != null) server.close();
+         } catch (IOException e) {
++            log.severe(e.getMessage());
+         }
+     }
+ 
+@@ -51,13 +62,18 @@ public class ImageSender {
+         if (this.host.equals(host) && this.port == port) return;
+         close();
+         try {
+-            InetAddress address = InetAddress.getByName(host);
+-            socket = new Socket(address, port);
++            if (host.equals("0.0.0.0")) {
++                server = new ServerSocket(port);
++                socket = server.accept();
++            } else {
++                InetAddress address = InetAddress.getByName(host);
++                socket = new Socket(address, port);
++            }
+             stream = socket.getOutputStream();
+             this.host = host;
+             this.port = port;
+         } catch (Exception e) {
+-            e.printStackTrace();
++            log.severe(e.getMessage());
+         }
+     }
+ }
+diff --git a/app/src/main/java/com/yesmanchik/camerastreamer/MainActivity.java b/app/src/main/java/com/yesmanchik/camerastreamer/MainActivity.java
+index af8b0cf..aeac120 100644
+--- a/app/src/main/java/com/yesmanchik/camerastreamer/MainActivity.java
++++ b/app/src/main/java/com/yesmanchik/camerastreamer/MainActivity.java
+@@ -67,6 +67,12 @@ public class MainActivity extends AppCompatActivity implements Camera.PreviewCal
+             public void onSurfaceTextureAvailable(SurfaceTexture texture, int width, int height) {
+                 startCamera();
+                 imageSender = new ImageSender(imageSize.width, imageSize.height);
++                runInBackground(new Runnable() {
++                    @Override
++                    public void run() {
++                        imageSender.connect("0.0.0.0", 6666);
++                    }
++                });
+             }
+ 
+             @Override
+diff --git a/app/src/main/res/layout/activity_main.xml b/app/src/main/res/layout/activity_main.xml
+index 81e1173..ac4c792 100644
+--- a/app/src/main/res/layout/activity_main.xml
++++ b/app/src/main/res/layout/activity_main.xml
+@@ -21,7 +21,7 @@
+         android:layout_height="wrap_content"
+         android:ems="10"
+         android:inputType="text"
+-        android:text="192.168.0.100"
++        android:text="0.0.0.0"
+         app:layout_constraintBottom_toBottomOf="parent"
+         app:layout_constraintEnd_toEndOf="parent"
+         app:layout_constraintStart_toStartOf="parent" />
